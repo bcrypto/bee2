@@ -26,7 +26,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-bool_t bashTest()
+bool_t bashTest0()
 {
 	octet buf[192];
 	octet hash[64];
@@ -131,4 +131,15 @@ bool_t bashTest()
 		return FALSE;
 	// все нормально
 	return TRUE;
+}
+
+extern int bashAVX_enabled;
+bool_t bashTest()
+{
+    bool_t ok0, ok1;
+    bashAVX_enabled = 0;
+    ok0 = bashTest0();
+    bashAVX_enabled = 1;
+    ok1 = bashTest0();
+    return ok0 && ok1;
 }

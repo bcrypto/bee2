@@ -19,6 +19,7 @@ set(src
   core/word.c
   crypto/bake.c
   crypto/bash.c
+  crypto/bash_avx.c
   crypto/bels.c
   crypto/belt.c
   crypto/bign.c

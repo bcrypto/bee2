@@ -176,13 +176,19 @@ static void bashF0(u64 s[24])
 	t0 = t1 = t2 = 0;
 }
 
+void bashF0_AVX( u64 S[24] );
+int bashAVX_enabled = 0;
+
 void bashF(octet block[192])
 {
 	u64* s = (u64*)block;
 #if (OCTET_ORDER == BIG_ENDIAN)
 	u64Rev2(s, 24);
 #endif
-	bashF0(s);
+    if( !bashAVX_enabled )
+        bashF0(s);
+	else
+        bashF0_AVX(s);
 #if (OCTET_ORDER == BIG_ENDIAN)
 	u64Rev2(s, 24);
 #endif

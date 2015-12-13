@@ -26,7 +26,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-bool_t bashBench()
+bool_t bashBench0()
 {
 	octet belt_state[256];
 	octet bash_state[1024];
@@ -85,4 +85,15 @@ bool_t bashBench()
 	}
 	// все нормально
 	return TRUE;
+}
+
+extern int bashAVX_enabled;
+bool_t bashBench()
+{
+    bool_t ok0, ok1;
+    bashAVX_enabled = 0;
+    ok0 = bashBench0();
+    bashAVX_enabled = 1;
+    ok1 = bashBench0();
+    return ok0 && ok1;
 }
