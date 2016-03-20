@@ -330,7 +330,7 @@ T == octet.
 	#elif (__WORDSIZE == 64)
 		#define B_PER_W 64
 		typedef u64 word;
-		typedef u128 dword;
+		//typedef u128 dword;
 	#else
 		#error "Unsupported word size"
 	#endif
