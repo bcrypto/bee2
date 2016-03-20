@@ -55,6 +55,8 @@ extern "C" {
 #define ERR_TOO_MANY_OPEN_FILES		_ERR_REG(4)
 /* доступ запрещен */
 #define ERR_ACCESS_DENIED			_ERR_REG(5)
+/* пользователь отозван */
+#define ERR_REVOKED					ERR_ACCESS_DENIED
 /* неверный дескриптор */
 #define ERR_INVALID_HANDLE			_ERR_REG(6)
 /* не хватает памяти для начала операции */

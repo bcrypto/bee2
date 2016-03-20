@@ -84,6 +84,7 @@ extern bool_t bakeDemo();
 extern bool_t bashTest();
 extern bool_t bashBench();
 extern bool_t botpTest();
+extern bool_t beTest();
 
 int testCrypto()
 {
@@ -101,6 +102,7 @@ int testCrypto()
 	printf("dstuTest: %s\n", (code = dstuTest()) ? "OK" : "Err"), ret |= !code;
 	printf("g12sTest: %s\n", (code = g12sTest()) ? "OK" : "Err"), ret |= !code;
 	printf("pfokTest: %s\n", (code = pfokTest()) ? "OK" : "Err"), ret |= !code;
+	printf("beTest: %s\n", (code = beTest()) ? "OK" : "Err"), ret |= !code;
 	return ret;
 }
 

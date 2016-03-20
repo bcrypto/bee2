@@ -9,6 +9,7 @@ add_executable(testbee2
 	crypto/bake-test.c
 	crypto/bash-bench.c
 	crypto/bash-test.c
+	crypto/be-test.c
 	crypto/bels-test.c
 	crypto/belt-bench.c
 	crypto/belt-test.c

@@ -19,6 +19,7 @@ set(src
   core/word.c
   crypto/bake.c
   crypto/bash.c
+  crypto/be.c
   crypto/bels.c
   crypto/belt.c
   crypto/bign.c
@@ -35,6 +36,7 @@ set(src
   math/pp.c
   math/pri.c
   math/qr.c
+  math/sd.c
   math/ww.c
   math/zm.c
   math/zz.c
