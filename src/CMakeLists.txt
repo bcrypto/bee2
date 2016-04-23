@@ -19,7 +19,6 @@ set(src
   core/word.c
   crypto/bake.c
   crypto/bash.c
-  crypto/bash_avx.c
   crypto/bels.c
   crypto/belt.c
   crypto/bign.c
@@ -40,6 +39,11 @@ set(src
   math/zm.c
   math/zz.c
 )
+if(WITH_AVX2)
+set(src ${src}
+  crypto/bash_avx2.c
+)
+endif(WITH_AVX2)
 
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
   message(FATAL_ERROR "Need to choose static or shared bee2 build!")

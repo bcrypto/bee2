@@ -16,6 +16,9 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/bash.h>
+#if defined(BEE2_BASH_AVX2)
+#include <bee2/crypto/bash_avx2.h>
+#endif
 #include <bee2/crypto/belt.h>
 #include <bee2/math/pp.h>
 #include <bee2/math/ww.h>
@@ -30,6 +33,9 @@ bool_t bashBench0()
 {
 	octet belt_state[256];
 	octet bash_state[1024];
+#if defined(BEE2_BASH_AVX2)
+	octet bashavx2_state[1024];
+#endif
 	octet combo_state[256];
 	octet buf[1024];
 	octet hash[64];
@@ -82,18 +88,46 @@ bool_t bashBench0()
 		printf("bashBench::bash512:   %3u cycles / byte [%5u kBytes / sec]\n",
 			(unsigned)(ticks / 1024 / reps),
 			(unsigned)tmSpeed(reps, ticks));
+#if defined(BEE2_BASH_AVX2)
+		// эксперимент c bashavx2_256
+		ASSERT(bashavx2_256_keep() <= sizeof(bashavx2_state));
+		bashavx2_256Start(bashavx2_state);
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			bashavx2_256StepH(buf, sizeof(buf), bashavx2_state);
+		bashavx2_256StepG(hash, bashavx2_state);
+		ticks = tmTicks() - ticks;
+		printf("bashBench::bashavx2_256:   %3u cycles / byte [%5u kBytes / sec]\n",
+			(unsigned)(ticks / 1024 / reps),
+			(unsigned)tmSpeed(reps, ticks));
+		// эксперимент c bashavx2_384
+		ASSERT(bashavx2_384_keep() <= sizeof(bashavx2_state));
+		bashavx2_384Start(bashavx2_state);
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			bashavx2_384StepH(buf, sizeof(buf), bashavx2_state);
+		bashavx2_384StepG(hash, bashavx2_state);
+		ticks = tmTicks() - ticks;
+		printf("bashBench::bashavx2_384:   %3u cycles / byte [%5u kBytes / sec]\n",
+			(unsigned)(ticks / 1024 / reps),
+			(unsigned)tmSpeed(reps, ticks));
+		// эксперимент c bashavx2_512
+		ASSERT(bashavx2_512_keep() <= sizeof(bashavx2_state));
+		bashavx2_512Start(bashavx2_state);
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			bashavx2_512StepH(buf, sizeof(buf), bashavx2_state);
+		bashavx2_512StepG(hash, bashavx2_state);
+		ticks = tmTicks() - ticks;
+		printf("bashBench::bashavx2_512:   %3u cycles / byte [%5u kBytes / sec]\n",
+			(unsigned)(ticks / 1024 / reps),
+			(unsigned)tmSpeed(reps, ticks));
+#endif
 	}
 	// все нормально
 	return TRUE;
 }
 
-extern int bashAVX_enabled;
 bool_t bashBench()
 {
-    bool_t ok0, ok1;
-    bashAVX_enabled = 0;
-    ok0 = bashBench0();
-    bashAVX_enabled = 1;
-    ok1 = bashBench0();
-    return ok0 && ok1;
+    bool_t ok;
+    ok = bashBench0();
+    return ok;
 }
