@@ -284,16 +284,16 @@ void bashavx2_F( octet block[ 192 ] )
 
 /*
 *******************************************************************************
-Хэширование
+РҐСЌС€РёСЂРѕРІР°РЅРёРµ
 *******************************************************************************
 */
 
 typedef struct
 {
-    u64 s[ 24 ];			/*< состояние */
-    u64 s1[ 24 ];			/*< копия s */
-    size_t block_len;	/*< длина блока */
-    size_t filled;		/*< накоплено октетов в блоке */
+    u64 s[ 24 ];			/*< СЃРѕСЃС‚РѕСЏРЅРёРµ */
+    u64 s1[ 24 ];			/*< РєРѕРїРёСЏ s */
+    size_t block_len;	/*< РґР»РёРЅР° Р±Р»РѕРєР° */
+    size_t filled;		/*< РЅР°РєРѕРїР»РµРЅРѕ РѕРєС‚РµС‚РѕРІ РІ Р±Р»РѕРєРµ */
 } bashavx2__st;
 
 size_t bashavx2_keep()
@@ -309,9 +309,9 @@ void bashavx2_Start( void* state, size_t l )
     // s <- 0^{1536 - 64} || <l / 4>_{64}
     memSetZero( s->s, sizeof( s->s ) - 8 );
     s->s[ 23 ] = (u64)( l / 4 );
-    // длина блока
+    // РґР»РёРЅР° Р±Р»РѕРєР°
     s->block_len = 192 - l / 2;
-    // нет накопленнных данных
+    // РЅРµС‚ РЅР°РєРѕРїР»РµРЅРЅРЅС‹С… РґР°РЅРЅС‹С…
     s->filled = 0;
 }
 
@@ -319,7 +319,7 @@ void bashavx2_StepH( const void* buf, size_t count, void* state )
 {
     bashavx2__st* s = (bashavx2__st*)state;
     ASSERT( memIsDisjoint2( buf, count, s, sizeof( bashavx2__st ) ) );
-    // есть накопленные данные?
+    // РµСЃС‚СЊ РЅР°РєРѕРїР»РµРЅРЅС‹Рµ РґР°РЅРЅС‹Рµ?
     if( s->filled )
     {
         if( count < s->block_len - s->filled )
@@ -337,7 +337,7 @@ void bashavx2_StepH( const void* buf, size_t count, void* state )
         bashavx2_F0( s->s );
         s->filled = 0;
     }
-    // цикл по полным блокам
+    // С†РёРєР» РїРѕ РїРѕР»РЅС‹Рј Р±Р»РѕРєР°Рј
     while( count >= s->block_len )
     {
         memCopy( s->s, buf, s->block_len );
@@ -348,7 +348,7 @@ void bashavx2_StepH( const void* buf, size_t count, void* state )
         buf = (const octet*)buf + s->block_len;
         count -= s->block_len;
     }
-    // неполный блок?
+    // РЅРµРїРѕР»РЅС‹Р№ Р±Р»РѕРє?
     if( count )
         memCopy( s->s, buf, s->filled = count );
 }
@@ -359,21 +359,21 @@ static void bashavx2_StepG_internal( size_t hash_len, void* state )
     // pre
     ASSERT( memIsValid( s, sizeof( bashavx2__st ) ) );
     ASSERT( s->block_len + hash_len * 2 <= 192 );
-    // создать копию s->s
+    // СЃРѕР·РґР°С‚СЊ РєРѕРїРёСЋ s->s
     memCopy( s->s1, s->s, sizeof( s->s ) );
-    // есть необработанные данные?
+    // РµСЃС‚СЊ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹Рµ РґР°РЅРЅС‹Рµ?
     if( s->filled )
     {
         memSetZero( (octet*)s->s1 + s->filled, s->block_len - s->filled );
         ( (octet*)s->s1 )[ s->filled ] = 0x40;
     }
-    // дополнительный блок
+    // РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ Р±Р»РѕРє
     else
     {
         memSetZero( s->s1, s->block_len );
         ( (octet*)s->s1 )[ 0 ] = 0x40;
     }
-    // последний шаг
+    // РїРѕСЃР»РµРґРЅРёР№ С€Р°Рі
     bashavx2_F0( s->s1 );
 #if (OCTET_ORDER == BIG_ENDIAN)
     u64Rev2( s->s1, ( hash_len + 7 ) / 8 );
@@ -397,20 +397,20 @@ bool_t bashavx2_StepV( const octet hash[], size_t hash_len, void* state )
 err_t bashavx2_Hash( octet hash[], size_t l, const void* src, size_t count )
 {
     void* state;
-    // проверить входные данные
+    // РїСЂРѕРІРµСЂРёС‚СЊ РІС…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ
     if( l == 0 || l % 16 != 0 || l > 256 )
         return ERR_BAD_PARAMS;
     if( !memIsValid( src, count ) || !memIsValid( hash, l / 4 ) )
         return ERR_BAD_INPUT;
-    // создать состояние
+    // СЃРѕР·РґР°С‚СЊ СЃРѕСЃС‚РѕСЏРЅРёРµ
     state = blobCreate( bashavx2_keep() );
     if( state == 0 )
         return ERR_NOT_ENOUGH_MEMORY;
-    // вычислить хэш-значение
+    // РІС‹С‡РёСЃР»РёС‚СЊ С…СЌС€-Р·РЅР°С‡РµРЅРёРµ
     bashavx2_Start( state, l );
     bashavx2_StepH( src, count, state );
     bashavx2_StepG( hash, l / 4, state );
-    // завершить
+    // Р·Р°РІРµСЂС€РёС‚СЊ
     blobClose( state );
     return ERR_OK;
 }
