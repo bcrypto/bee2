@@ -477,6 +477,18 @@ size_t wwNAF(
 	size_t w				/*!< [in] длина окна */
 );
 
+/*!	\brief Расчет OddRecordiing
+
+	todo add description
+*/
+void wwOddRecording(
+	word oddRecording[],	/*!< [out] форма */
+	const word a[],			/*!< [in] слово */
+	size_t n,				/*!< [in] длина a в машинных словах */
+	size_t k,				/*!< [in] длина формы в машинных словах*/
+	size_t w				/*!< [in] длина окна */
+);
+
 /*
 *******************************************************************************
 Сдвиги и очистка

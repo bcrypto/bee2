@@ -473,6 +473,56 @@ size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 	return naf_size;
 }
 
+//oddRecording length = k(w+1) bits 
+void wwOddRecording(word oddRecording[], const word a[], size_t n, size_t k, size_t w)
+{
+	const word hi_bit = WORD_BIT_POS(w);
+	register word digit;
+	size_t i;
+	//todo check a < 2^(kw)
+	ASSERT(2 <= w && w < (B_PER_W - 1));
+	ASSERT(wwIsValid(a, n) & wwIsValid(oddRecording, k));
+	ASSERT(wwIsDisjoint2(a, n, oddRecording, k));
+	//a - нечетное
+	ASSERT(wwTestBit(a, 0));
+
+	wwSetZero(oddRecording, k);
+
+	for (i = 0; i < k - 1; ++i)
+	{
+		//digit <- a mod 2^(w+1)
+		//условные переходы wwGetBits зависят только от k
+		//todo собственное пробегание (оптимизация)?
+		digit = wwGetBits(a, i*w, w + 1);
+		
+		//результат вычитания (*)
+		digit |= 1;
+		
+		//digit <- digit - 2^w
+		//todo избавиться от if
+		if (digit & hi_bit) {
+			//результат вычитания положительное число - убираем бит
+			digit ^= hi_bit;
+		}
+		else {
+			//результат вычитания отрицательное число - берем модуль и выставляем бит
+			digit = hi_bit - digit;
+			digit ^= hi_bit;
+		}
+		
+		//условные переходы wwSetBits не зависят от вставляемого значения
+		wwSetBits(oddRecording, i * (w + 1), w + 1, digit);
+		
+		//a <- (a - digit)/2^w (*)
+	}
+	//последний шаг
+	digit = wwGetBits(a, (k - 1) * w, w);
+	digit |= 1;
+	wwSetBits(oddRecording, (k - 1) * (w + 1), w + 1, digit);
+	//очистка
+	digit = 0;
+}
+
 /*
 *******************************************************************************
 Сдвиги и очистка
