@@ -24,6 +24,45 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+bool_t testOddRecording()
+{
+	const size_t n = 8;
+	const size_t w = B_PER_W - 1;
+	const size_t m = 9;
+	const size_t k = 9;
+	int i;
+	register word digit;
+	word a[8];
+	word recording[11];
+	word result[8];
+	const word hi_bit = WORD_BIT_POS(w);
+	const word mask = hi_bit - 1;
+	a[0] = ~0;
+	a[1] = ~0;
+	a[2] = ~0;
+	a[3] = ~0;
+	a[4] = ~0;
+	a[5] = ~0;
+	a[6] = ~0;
+	a[7] = ~0;
+	wwSetZero(result, n);
+	wwOddRecording(recording, m, a, n, k, w);
+	for (i = k-1; i >= 0; --i) {
+		//multiply 2^w;
+		wwShHi(result, n, w);
+		digit = wwGetBits(recording, i*(w+1), w+1);
+		if (digit & hi_bit) {
+			//negative
+			zzSubW2(result, n, digit & mask);
+		}
+		else {
+			//positive
+			zzAddW2(result, n, digit & mask);
+		}
+	}
+	return wwEq(a, result, n);
+}
+
 static bool_t zzTestAdd()
 {
 	const size_t n = 8;
@@ -488,6 +527,7 @@ bool_t zzTest()
 		zzTestMul() && 
 		zzTestMod() && 
 		zzTestGCD() && 
-		zzTestRed();
+		zzTestRed() &&
+		testOddRecording();
 }
 
