@@ -60,6 +60,9 @@
 # Math files
 *.nb
 
+#IDE files
+.vscode/
+
 # Local files
 backup
 build

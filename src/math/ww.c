@@ -473,7 +473,6 @@ size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 	return naf_size;
 }
 
-//oddRecording length = k(w+1) bits 
 void wwOddRecording(word oddRecording[], size_t m, const word a[], size_t n, size_t k, size_t w)
 {
 	const word hi_bit = WORD_BIT_POS(w);

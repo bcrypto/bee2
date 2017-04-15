@@ -560,7 +560,7 @@ bool_t ecIsOperableGroup(
 */
 bool_t ecMulA(
 	word b[],			/*!< [out] кратная точка */
-	const word a[],		/*!<[in] базовая точка */
+	const word a[],		/*!< [in] базовая точка */
 	const ec_o* ec,		/*!< [in] описание кривой */
 	const word d[],		/*!< [in] кратность */
 	size_t m,			/*!< [in] длина d в машинных словах */
