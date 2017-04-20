@@ -249,7 +249,7 @@ size_t FAST(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, void* stack)
 {
-	const size_t n = ec->f->n;
+	const size_t point_size = ec->f->n * ec->d;
 		
 	//window width of recording
 	const size_t odd_recording_width = ecNAFWidth(B_OF_W(m));
@@ -259,22 +259,23 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 
 	//2^w, required for positive/negative decoding of recording
 	const word hi_bit = WORD_1 << odd_recording_width;
-
+	
 	//number of elements in actual recording of d
 	const size_t odd_recording_size = (m * B_PER_W + odd_recording_width - 1) / odd_recording_width;
 	
-	register size_t i;
+	register int i;
 	register word w;
+	register word sign;
 	
 	word delta = WORD_1;
 	word b_flag;
 
 	// переменные в stack
 	word* odd_recording;			/* Odd Recording */
-	word* t;			/* 2 вспомогательных точка */
+	word* t;			/* 2 вспомогательных точки */
 	word* pre;			/* pre[i] =  (odd_recording_size элементов) */
 	word* q;			/* вспомогательная точка */
-	word* temp;
+	word* temp;			/* вспомогательное число */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	
@@ -286,17 +287,17 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	temp = q + point_size;
 	stack = temp + m;
 	
-	// расчет pre[i]
+	// расчет pre[i]: pre[2i] = pre[2i - 2] + 2a, pre[2i + 1] = -pre[2i]
 	ASSERT(odd_recording_count > 1);
 	ASSERT(odd_recording_width >= 2);
 	// pre[0] <- a, pre[1] <- -a
 	ecFromA(pre, a, ec, stack);
-	ecNeg(pre + ec_d * n, pre, ec, stack);	
+	ecNeg(pre + point_size, pre, ec, stack);	
 	//t[0] <- 2a
 	ecDblA(t, pre, ec, stack);
 	for (i = 1; i < odd_recording_count/2 - 1; ++i) {
-		ecAdd(pre + 2 * i * ec->d * n, pre + (2 * i - 2) * ec->d * n, t, ec, stack);
-		ecNeg(pre + (2 * i + 1) * ec->d * n, pre + 2 * i * ec->d * n, t, ec, stack);
+		ecAdd(pre + 2 * i * point_size, pre + (2 * i - 2) * point_size, t, ec, stack);
+		ecNeg(pre + (2 * i + 1) * point_size, pre + 2 * i * point_size, t, ec, stack);
 	}
 
 	// переход к нечетной кратности
@@ -304,69 +305,77 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	zzAddW(temp, d, m, delta);
 
 	//1, 0, -1
-	b_flag = wwCmp2(temp, m, ec->order, n);
+	b_flag = wwCmp2(temp, m, ec->order, ec->f->n);
 	//-1 -> 0
 	b_flag = wordEq0M(b_flag, WORD_1);
 	
 	//recalculate temp
 	zzSubW2(temp, m, (delta * 2) & b_flag);
 
-	//save point, current sequence in stack: t[0] <- 2a, t[1] <- -2a, pre[0] = a, pre[1] = -a => t[0]=2a, t[1]=-2a, t[2]=a, t[3]=-a
-	ecNeg(t + ec->d * n, t, ec, stack);
-
-	/*b_flag ~= ~b_flag;
-	b_flag -= b_flag;
+	// save point, current sequence in stack: t[0] <- 2a, t[1] <- -2a, pre[0] = a, pre[1] = -a => t[0]=2a, t[1]=-2a, t[2]=a, t[3]=-a
+	ecNeg(t + point_size, t, ec, stack);
+	//if b_flag = 11111111_2 (binary) => need addition, add delta*a, else sub delta*a, delta = 1, 2;
+	//t += (((delta – 2) & 2) - (~b_flag)) * point_size;
+	b_flag ~= b_flag;
 	delta -= 2;
-	delta &= 2;*/
-
-	//if b_flag = 11111111_2 => need addition, add delta*a, else sub delta*a, delta = 1, 2;
-	t += (((delta – 2) & 2) - (~b_flag)) * ec->d * n;
-
-
+	delta &= 2;
+	delta -= b_flag;
+	delta *= point_size;
+	t += delta;
+	
 	// расчет Odd_Recording
 	ASSERT(odd_recording_width >= 3);
 	wwOddRecording(odd_recording, W_OF_B(odd_recording_size * (odd_recording_width + 1)),
 					temp, m, odd_recording_size, odd_recording_width);
 	
-
+	// q <- odd_recording[k-1] * a 
+	w = wwGetBits(oddRecording, (odd_recording_size - 1) * (odd_recording_width + 1), odd_recording_width+1);
+		
+	//calculate index	
+	sign = w & hi_bit;
+	w ^= sign;	
+	ASSERT((w & 1) && (w & hi_bit) == 0);
+	sign >>= odd_recording_width;
+	sign ~= sign;
+	sign &= WORD_1;
+	w ^= sign;
+	//save
+	wwCopy(q, pre + w * point_size, point_size);
 	
-
-
-
-
-	// t <- a[naf[l - 1]]
-	w = wwGetBits(odd_recording, 0, odd_recording_width);
-	ASSERT((w & 1) == 1 && (w & hi_bit) == 0);
-	wwCopy(t, pre + (w >> 1) * ec->d * n, ec->d * n);
-	// цикл по символам NAF
-	i = odd_recording_width;
-	while (--odd_recording_size)
-	{
-		w = wwGetBits(odd_recording, i, odd_recording_width);
-		if (w & 1)
-		{
-			// t <- 2 t
-			ecDbl(t, t, ec, stack);
-			// t <- t \pm pre[naf[w]]
-			if (w == 1)
-				ecAddA(t, t, pre, ec, stack);
-			else if (w == (hi_bit ^ 1))
-				ecSubA(t, t, pre, ec, stack);
-			else if (w & hi_bit)
-				ecSub(t, t, pre + ((w ^ hi_bit) >> 1) * ec->d * n, ec, stack);
-			else
-				ecAdd(t, t, pre + (w >> 1) * ec->d * n, ec, stack);
-			// к следующему разряду naf
-			i += odd_recording_width;
+	for (i = odd_recording_size - 2; i >= 0; --i) {
+		//Q <- 2^odd_recording_width * Q
+		w = odd_recording_width >> 1;
+		while (w) {
+			ecDbl(q, q, ec, stack);
+			w >>= 1;
 		}
-		else
-			ecDbl(t, t, ec, stack), ++i;
+
+		w = wwGetBits(oddRecording, i * (odd_recording_width + 1), odd_recording_width+1);
+		// calculate index
+		sign = w & hi_bit;
+		w ^= sign;	
+		ASSERT((w & 1) && (w & hi_bit) == 0);
+		sign >>= odd_recording_width;
+		sign ~= sign;
+		sign &= WORD_1;
+		w ^= sign;
+		// add
+		ecAdd(q, q, pre + w * point_size, stack);
 	}
-	// очистка
+
+	// correction
+	ecAdd(q, q, t, ec, stack);
+	
+	// cleanup
 	w = 0;
 	i = 0;
+	t = NULL;
+	sign = 0;
+	delta = 0;
+	b_flag = 0; 
+	
 	// к аффинным координатам
-	return ecToA(b, t, ec, stack);
+	return ecToA(b, q, ec, stack);
 }
 
 size_t SAFE(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
