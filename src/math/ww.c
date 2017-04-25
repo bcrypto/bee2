@@ -485,6 +485,7 @@ void wwOddRecording(word oddRecording[], size_t m, const word a[], size_t n, siz
 	ASSERT(wwIsDisjoint2(a, n, oddRecording, m));
 	ASSERT(wwTestBit(a, 0));
 	ASSERT(k * w >= n * B_PER_W);
+	ASSERT((k - 1) * w < n * B_PER_W);
 	ASSERT(m >= W_OF_B(k * (w + 1)));
 
 	wwSetZero(oddRecording, m);
@@ -503,7 +504,8 @@ void wwOddRecording(word oddRecording[], size_t m, const word a[], size_t n, siz
 
 		wwSetBits(oddRecording, i * (w+1), (w+1), digit);
 	}
-	digit = wwGetBits(a, (k - 1) * w, w);
+	mask = B_PER_W * n - (k - 1) * w;
+	digit = wwGetBits(a, (k - 1) * w, mask);
 	digit |= WORD_1;
 	wwSetBits(oddRecording, (k - 1) * (w + 1), w+1, digit);
 	//очистка

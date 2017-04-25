@@ -295,9 +295,9 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	ecNeg(pre + point_size, pre, ec, stack);	
 	//t[0] <- 2a
 	ecDblA(t, pre, ec, stack);
-	for (i = 1; i < odd_recording_count/2 - 1; ++i) {
+	for (i = 1; i <= odd_recording_count/2 - 1; ++i) {
 		ecAdd(pre + 2 * i * point_size, pre + (2 * i - 2) * point_size, t, ec, stack);
-		ecNeg(pre + (2 * i + 1) * point_size, pre + 2 * i * point_size, t, ec, stack);
+		ecNeg(pre + (2 * i + 1) * point_size, pre + 2 * i * point_size, ec, stack);
 	}
 
 	// переход к нечетной кратности
@@ -316,7 +316,7 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	ecNeg(t + point_size, t, ec, stack);
 	//if b_flag = 11111111_2 (binary) => need addition, add delta*a, else sub delta*a, delta = 1, 2;
 	//t += (((delta – 2) & 2) - (~b_flag)) * point_size;
-	b_flag ~= b_flag;
+	b_flag = ~b_flag;
 	delta -= 2;
 	delta &= 2;
 	delta -= b_flag;
@@ -328,15 +328,15 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	wwOddRecording(odd_recording, W_OF_B(odd_recording_size * (odd_recording_width + 1)),
 					temp, m, odd_recording_size, odd_recording_width);
 	
-	// q <- odd_recording[k-1] * a 
-	w = wwGetBits(oddRecording, (odd_recording_size - 1) * (odd_recording_width + 1), odd_recording_width+1);
+	// q <- odd_recording[k-1] * a
+	w = wwGetBits(odd_recording, (odd_recording_size - 1) * (odd_recording_width + 1), odd_recording_width + 1);
 		
 	//calculate index	
 	sign = w & hi_bit;
 	w ^= sign;	
 	ASSERT((w & 1) && (w & hi_bit) == 0);
 	sign >>= odd_recording_width;
-	sign ~= sign;
+	sign = ~sign;
 	sign &= WORD_1;
 	w ^= sign;
 	//save
@@ -344,23 +344,23 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	
 	for (i = odd_recording_size - 2; i >= 0; --i) {
 		//Q <- 2^odd_recording_width * Q
-		w = odd_recording_width >> 1;
+		w = odd_recording_width;
 		while (w) {
 			ecDbl(q, q, ec, stack);
-			w >>= 1;
+			--w;
 		}
 
-		w = wwGetBits(oddRecording, i * (odd_recording_width + 1), odd_recording_width+1);
+		w = wwGetBits(odd_recording, i * (odd_recording_width + 1), odd_recording_width + 1);
 		// calculate index
 		sign = w & hi_bit;
 		w ^= sign;	
 		ASSERT((w & 1) && (w & hi_bit) == 0);
 		sign >>= odd_recording_width;
-		sign ~= sign;
+		sign = ~sign;
 		sign &= WORD_1;
 		w ^= sign;
 		// add
-		ecAdd(q, q, pre + w * point_size, stack);
+		ecAdd(q, q, pre + w * point_size, ec, stack);
 	}
 
 	// correction
@@ -380,11 +380,16 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 
 size_t SAFE(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
-	const size_t naf_width = ecNAFWidth(B_OF_W(m));
-	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	return O_OF_W(2 * m + 1) +
-		O_OF_W(ec_d * n) +
-		O_OF_W(ec_d * n * naf_count) +
+	const size_t point_size = n * ec_d;
+	const size_t odd_recording_width = ecNAFWidth(B_OF_W(m));
+	const size_t odd_recording_count = SIZE_1 << odd_recording_width;
+	const size_t odd_recording_size = (m * B_PER_W + odd_recording_width - 1) / odd_recording_width;
+
+	return O_OF_W(W_OF_B(odd_recording_size * (odd_recording_width + 1))) +
+		O_OF_W(2 * point_size) +
+		O_OF_W(odd_recording_count * point_size) +
+		O_OF_W(point_size) +
+		O_OF_W(m) +
 		ec_deep;
 }
 
