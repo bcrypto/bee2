@@ -556,9 +556,10 @@ bool_t ecIsOperableGroup(
 	\expect Точка a лежит на ec.
 	\return TRUE, если кратная точка является аффинной, и FALSE в противном
 	случае (b == O).
+	\safe Имеется ускоренная нерегулярная редакция.
 	\deep{stack} ecpMulA_deep(ec->f->n, ec->d, ec->f->deep, m).
 */
-bool_t ecMulA(
+bool_t SAFE(ecMulA)(
 	word b[],			/*!< [out] кратная точка */
 	const word a[],		/*!< [in] базовая точка */
 	const ec_o* ec,		/*!< [in] описание кривой */
@@ -567,7 +568,11 @@ bool_t ecMulA(
 	void* stack			/*!< [in] вспомогательная память */
 );
 
-size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t SAFE(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+bool_t FAST(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],size_t m, void* stack);
+
+size_t FAST(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
 /*!	\brief Имеет порядок?
 

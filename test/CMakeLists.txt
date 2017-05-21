@@ -28,6 +28,7 @@ add_executable(testbee2
 	math/ecp-bench.c
 	math/pri-test.c
 	math/zz-test.c
+	math/ww-test.c
 	math/word-test.c
 	test.c
 )

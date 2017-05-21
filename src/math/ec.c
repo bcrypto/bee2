@@ -261,7 +261,7 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	const word hi_bit = WORD_1 << odd_recording_width;
 	
 	//number of elements in actual recording of d
-	const size_t odd_recording_size = (m * B_PER_W + odd_recording_width - 1) / odd_recording_width;
+	const size_t odd_recording_size = wwOddRecording_size(m, odd_recording_width);
 	
 	register int i;
 	register word w;
@@ -294,8 +294,8 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	ecFromA(pre, a, ec, stack);
 	ecNeg(pre + point_size, pre, ec, stack);	
 	//t[0] <- 2a
-	ecDblA(t, pre, ec, stack);
-	for (i = 1; i <= odd_recording_count/2 - 1; ++i) {
+	ecDblA(t, a, ec, stack);
+	for (i = 1; (unsigned)i <= odd_recording_count/2 - 1; ++i) {
 		ecAdd(pre + 2 * i * point_size, pre + (2 * i - 2) * point_size, t, ec, stack);
 		ecNeg(pre + (2 * i + 1) * point_size, pre + 2 * i * point_size, ec, stack);
 	}
@@ -331,14 +331,9 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	// q <- odd_recording[k-1] * a
 	w = wwGetBits(odd_recording, (odd_recording_size - 1) * (odd_recording_width + 1), odd_recording_width + 1);
 		
-	//calculate index	
-	sign = w & hi_bit;
-	w ^= sign;	
+	//calculate index
 	ASSERT((w & 1) && (w & hi_bit) == 0);
-	sign >>= odd_recording_width;
-	sign = ~sign;
-	sign &= WORD_1;
-	w ^= sign;
+	w ^= WORD_1;
 	//save
 	wwCopy(q, pre + w * point_size, point_size);
 	

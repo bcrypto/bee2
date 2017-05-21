@@ -472,7 +472,9 @@ size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 	naf_len = a_len = 0;
 	return naf_size;
 }
-
+/*
+	\remark Для данной реализации значение k всегда должно равняться (n * B_PER_W + w - 1) / w.
+*/
 void wwOddRecording(word oddRecording[], size_t m, const word a[], size_t n, size_t k, size_t w)
 {
 	const word hi_bit = WORD_BIT_POS(w);
@@ -510,6 +512,10 @@ void wwOddRecording(word oddRecording[], size_t m, const word a[], size_t n, siz
 	wwSetBits(oddRecording, (k - 1) * (w + 1), w+1, digit);
 	//очистка
 	digit = WORD_0;
+}
+
+size_t wwOddRecording_size(size_t n, size_t w) {
+	return (n * B_PER_W + w - 1) / w;
 }
 
 /*
