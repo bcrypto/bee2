@@ -14,13 +14,18 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <stdio.h>
 #include <bee2/defs.h>
 
+/* 
 int runTest(char* testName, bool_t (*testFunction)()) {
 	bool_t code = testFunction();
 	printf("%s: %s\n", testName, code ? "OK" : "Err");
 	return !code;
 }
+*/
 
-/*
+#define runTest(testName, testFunction, code, ret)\
+	printf("%s: %s\n", (testName), ((code) = (testFunction)()) ? "OK" : "Err"), (ret) |= !(code);
+
+/* 
 *******************************************************************************
 Тестирование модулей core
 *******************************************************************************
@@ -81,7 +86,7 @@ int testMath()
 	printf("priTest: %s\n", (code = priTest()) ? "OK" : "Err"), ret |= !code;
 	printf("zzTest: %s\n", (code = zzTest()) ? "OK" : "Err"), ret |= !code;
 	printf("wordTest: %s\n", (code = wordTest()) ? "OK" : "Err"), ret |= !code;
-	ret |= runTest("wwTest", wwTest);
+	runTest("wwTest", wwTest, code, ret);
 	code = ecpBench(), ret |= !code;
 	return ret;
 }
